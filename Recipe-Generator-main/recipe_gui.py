@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk, scrolledtext
 from main import recipe_search  # Import the function from main.py
 import os
 from datetime import datetime
@@ -16,7 +17,7 @@ def generate_recipe():
             dt = now.strftime("%d/%m/%Y %H:%M:%S")
             hits = recipe_search(ingredient)
 
-            report.write(f"------------Recipe Generated {dt}-------------\n\n")
+            report.write(f"------------ Recipe Generated {dt} -------------\n\n")
             for single_hit in hits:
                 recipe_json = single_hit['recipe']
                 report.write(f"{recipe_json['label']}\n")
@@ -37,14 +38,31 @@ def display_file_content(file_path):
 # GUI setup
 root = tk.Tk()
 root.title("Recipe Generator")
+root.geometry("800x600")  # Increased window size
+root.configure(bg="#e6f7ff")  # Light blue background
 
-ingredient_label = tk.Label(root, text="Enter Ingredient:")
-ingredient_label.pack(pady=5)
-ingredient_entry = tk.Entry(root, width=40)
-ingredient_entry.pack(pady=5)
-generate_button = tk.Button(root, text="Generate Recipe", command=generate_recipe)
-generate_button.pack(pady=10)
-result_text = tk.Text(root, height=20, width=80, wrap=tk.WORD)
-result_text.pack(padx=10, pady=5)
+# Styling
+style = ttk.Style()
+style.configure("TButton", font=("Arial", 14, "bold"), padding=10, foreground="white", background="#007acc")
+style.map("TButton", background=[("active", "#005999")], foreground=[("!disabled", "red")])  # Ensure text is always visible
+style.configure("TLabel", font=("Arial", 14), background="#e6f7ff", foreground="#004080")
+style.configure("TEntry", font=("Arial", 14), padding=7)
+
+# UI Components
+frame = ttk.Frame(root, padding=30, style="TFrame")
+frame.pack(expand=True)
+
+ingredient_label = ttk.Label(frame, text="Enter Ingredient:")
+ingredient_label.pack(pady=10)
+
+ingredient_entry = ttk.Entry(frame, width=50)
+ingredient_entry.pack(pady=10)
+
+generate_button = ttk.Button(frame, text="Recipe Generator", command=generate_recipe, style="TButton")
+generate_button.pack(pady=15)
+
+# Scrollable Text Box
+result_text = scrolledtext.ScrolledText(frame, height=18, width=80, wrap=tk.WORD, font=("Arial", 12))
+result_text.pack(padx=10, pady=10)
 
 root.mainloop()

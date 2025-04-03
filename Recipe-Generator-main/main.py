@@ -1,25 +1,40 @@
 import os
-from urllib.request import urlopen
 import urllib.parse
 import json
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 from datetime import datetime
 
 # API Initialization
 def recipe_search(ingredient):
-    api_key = '7a7cd9b85dd6e0d516903b7c2d582bfa'
-    application_id = 'a720f909'
-    
+    api_key = '7a7cd9b85dd6e0d516903b7c2d582bfa'  # Replace with your Edamam API key
+    application_id = 'a720f909'  # Replace with your Edamam Application ID
+
     # URL Encoding to handle spaces and special characters
     encoded_ingredient = urllib.parse.quote(ingredient)
-    
-    url = f'https://api.edamam.com/search?app_id={application_id}&app_key={api_key}&q={encoded_ingredient}'
-    
-    # Opening the URL
-    result = urlopen(url)
-    
-    # Converting the information to JSON format
-    data = json.load(result)
-    return data['hits']
+
+    # Correct API URL
+    url = f'https://api.edamam.com/api/recipes/v2?type=public&app_id={application_id}&app_key={api_key}&q={encoded_ingredient}'
+
+    try:
+        # Opening the URL
+        result = urlopen(url)
+
+        # Converting the information to JSON format
+        data = json.load(result)
+
+        # Ensure 'hits' key exists, otherwise return an empty list
+        return data.get('hits', [])
+
+    except HTTPError as e:
+        print(f"HTTP Error: {e.code} - {e.reason}")
+    except URLError as e:
+        print(f"URL Error: {e.reason}")
+    except json.JSONDecodeError:
+        print("Error parsing JSON response from API.")
+
+    return []  # Return empty list if there was an error
+
 
 # User Inputs the ingredient
 ingredient = input('Enter an ingredient: ')
@@ -42,15 +57,18 @@ dt = now.strftime("%d/%m/%Y %H:%M:%S")
 hits = recipe_search(ingredient)
 
 # Heading the Text File
-report.write(f"--------------------------------------------Recipe Generated From {ingredient} --- {dt}--------------------------\n\n")
+report.write(f"-------------------------------------------- Recipe Generated From {ingredient} --- {dt} --------------------------\n\n")
 
 # Loop for Searching Recipes
-for single_hit in hits:
-    recipe_json = single_hit['recipe']
-    report.write(str(recipe_json['label']) + '\n')
-    report.write(str(recipe_json['ingredientLines']) + '\n')
-    report.write(str(recipe_json['dietLabels']) + '\n')
-    report.write('-' * 150 + '\n\n')
+if hits:
+    for single_hit in hits:
+        recipe_json = single_hit['recipe']
+        report.write(str(recipe_json['label']) + '\n')
+        report.write("Ingredients:\n" + "\n".join(recipe_json['ingredientLines']) + '\n')
+        report.write("Diet Labels: " + ", ".join(recipe_json.get('dietLabels', [])) + '\n')
+        report.write('-' * 150 + '\n\n')
+else:
+    report.write("No recipes found for the given ingredient.\n")
 
 print(f'File saved at: {outFileName}')
 
